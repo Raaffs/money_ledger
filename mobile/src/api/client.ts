@@ -1,7 +1,30 @@
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const NGROK_URL = 'https://untouched-conform-botany.ngrok-free.dev';
-export const API_BASE_URL = `${NGROK_URL}/api`;
+// Determine API Base URL:
+// 1. Custom explicit URL from EXPO_PUBLIC_API_URL
+// 2. Custom ngrok tunnel from EXPO_PUBLIC_NGROK_URL (or default to live ngrok)
+// 3. Fallback to Localhost: 10.0.2.2 for Android emulator, localhost for Web/iOS
+export const getBaseUrl = (): string => {
+  const customUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (customUrl) {
+    return customUrl.replace(/\/$/, '');
+  }
+
+  const ngrokUrl =
+    process.env.EXPO_PUBLIC_NGROK_URL ||
+    'https://untouched-conform-botany.ngrok-free.dev';
+  if (ngrokUrl) {
+    return `${ngrokUrl.replace(/\/$/, '')}/api`;
+  }
+
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:5000/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+export const API_BASE_URL = getBaseUrl();
 
 export const TOKEN_STORAGE_KEY = '@miniledger_auth_token';
 export const USER_STORAGE_KEY = '@miniledger_auth_user';
@@ -21,11 +44,12 @@ export const apiClient = async <T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  const baseUrl = getBaseUrl();
   const token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
+    ...(baseUrl.includes('ngrok') ? { 'ngrok-skip-browser-warning': 'true' } : {}),
     ...(options.headers as Record<string, string>),
   };
 
@@ -33,7 +57,7 @@ export const apiClient = async <T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${baseUrl}${endpoint}`;
 
   try {
     const response = await fetch(url, {
@@ -56,7 +80,7 @@ export const apiClient = async <T = any>(
     }
     throw new ApiError(
       0,
-      `Unable to connect to server at ${API_BASE_URL}. Ensure backend is running.`
+      `Unable to connect to server at ${baseUrl}. Ensure backend is running.`
     );
   }
 };

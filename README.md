@@ -13,7 +13,6 @@ A modern, full-stack application designed to track money lent to and borrowed fr
 [![React Native](https://img.shields.io/badge/React_Native-0.88-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-58-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![JWT](https://img.shields.io/badge/JWT-Tokens-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![Zod](https://img.shields.io/badge/Zod-Validation-3E67B1?style=for-the-badge&logo=zod&logoColor=white)](https://zod.dev/)
 
 ---
 
@@ -63,7 +62,7 @@ cp .env.example .env
 Verify the values in your `.env`:
 
 ```env
-PORT=4000
+PORT=5000
 NODE_ENV=development
 
 # Database configuration
@@ -99,42 +98,73 @@ Migrations are written in pure, standard **`.sql`** format (`-- Up Migration` an
 npm run migrate:up
 ```
 
-
 ---
 
 ### 5. Running the Application
 
+You can run the application in two ways: **Local Development** (no external tunnels required) or **Remote / Ngrok Tunnel** (to test on a real phone over the internet).
+
+#### Method A: Local Development (Default — No Ngrok Required)
+
 Open **two terminal tabs** in the project root:
 
-#### Terminal 1 — Start Backend Server:
+**Terminal 1 — Start Backend Server:**
 ```bash
 npm run dev
 ```
-- API Server runs at: **`http://localhost:4000`**
-- Health check available at: **`http://localhost:4000/health`**
+- API Server runs at: **`http://localhost:5000`**
+- Health check: **`http://localhost:5000/health`**
 
-#### Terminal 2 — Start Frontend (React Native / Expo):
-
+**Terminal 2 — Start Frontend (Web / Emulator / Local LAN):**
 ```bash
-# Run in Browser 
+# Option 1: Run in Chrome / Web Browser (Fastest)
 npm run mobile:web
-```
-- Opens automatically in your browser at: **`http://localhost:80    81`**
 
-```bash
-# Or run on Real Phone via Expo Go (iOS / Android)
+# Option 2: Run in Android Emulator
+npm run android
+
+# Option 3: Run on local Wi-Fi for Expo Go (same network)
 npm run mobile
 ```
-- Scan the terminal QR code using the **Expo Go** mobile app.
+*(By default, the mobile app automatically communicates with `http://localhost:5000/api` on Web and `http://10.0.2.2:5000/api` on the Android emulator)*
+
+---
+
+#### Method B: Remote Device Testing via Ngrok Tunnel
+
+If you want to test the app on a physical phone that is on mobile data or a different Wi-Fi network, you can route both the backend and Expo bundler through your own ngrok tunnel:
+
+1. **Start the backend server:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Start your own ngrok tunnel** forwarding to port 5000:
+   ```bash
+   # Via native ngrok CLI:
+   ngrok http 5000
+
+   # Or via Docker:
+   docker run --net=host -it -e NGROK_AUTHTOKEN=<YOUR_TOKEN> ngrok/ngrok:latest http 5000
+   ```
+   *Copy your generated forwarding URL (e.g., `https://your-domain.ngrok-free.dev`).*
+
+3. **Start Expo with your ngrok URL:**
+   ```bash
+   EXPO_PUBLIC_NGROK_URL=https://your-domain.ngrok-free.dev npm run mobile:tunnel
+   ```
+   *(Or save `EXPO_PUBLIC_NGROK_URL=https://your-domain.ngrok-free.dev` inside `mobile/.env` and run `npm run mobile:tunnel`)*
+
+4. **Scan the QR Code** in the **Expo Go** app on your phone.
 
 ---
 
 ### 6. Development Authentication Note
 
 When logging in from the mobile interface:
-1. Enter any 10-digit phone number (e.g., `9876543210`).
+1. Enter any 10-digit phone number (e.g., `9876543210`). The app automatically prepends `+91`.
 2. Tap **"Get Verification Code"**.
-3. Use the hardcoded mock OTP:
+3. Use the mock OTP:
    ```
    123456
    ```
@@ -219,8 +249,8 @@ loan-share/
 │   └── 1792746511161_init-schema.sql
 ├── mobile/                      # React Native (Expo) frontend
 │   ├── src/
-│   │   ├── api/                 # API client & endpoints
-│   │   ├── components/          # SummaryCards, LoanTable, CreateLoanModal
+│   │   ├── api/                 # Dynamic API client (local / ngrok)
+│   │   ├── components/          # SummaryCards, LoanTable, CreateLoanModal, Calendar
 │   │   ├── context/             # AuthContext (JWT session state)
 │   │   ├── screens/             # PhoneLoginScreen, OtpVerifyScreen, DashboardScreen, LoanDetailScreen
 │   │   ├── theme/               # Modern dark color palette
@@ -229,8 +259,8 @@ loan-share/
 │   └── package.json
 ├── src/                         # Node.js + TypeScript backend
 │   ├── config/                  # Environment loader
-│   ├── db/                      # PostgreSQL connection pool & migrate runner
-│   ├── middlewares/             # JWT auth & Zod error handler
+│   ├── db/                      # PostgreSQL connection pool & error handler
+│   ├── middlewares/             # JWT auth & clean error handler
 │   ├── models/                  # Data access layer (User, Loan, Payment, OTP models)
 │   ├── modules/                 # Modular domains (auth, user, loan)
 │   └── index.ts                 # Express server entry point
