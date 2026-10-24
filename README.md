@@ -20,7 +20,6 @@ A modern, full-stack application designed to track money lent to and borrowed fr
 ## ✨ Features
 
 - **Passwordless Phone Login**: Quick 2-step OTP flow (`request-otp` ➔ `verify-otp`) with signed JWT sessions.
-- **Mock OTP Mode**: Hardcoded to `123456` in development for seamless zero-friction testing.
 - **Two-Sided Ledger**: Tracks both sides of every transaction (Lender and Borrower are both registered users).
 - **Flexible Installments**: Borrowers can repay in partial chunks (e.g., ₹100, ₹200) or settle in full.
 - **Automated State Machine**: Loans automatically transition (`PENDING` ➔ `PARTIALLY_PAID` ➔ `REPAID`) based on the sum of logged installments.
@@ -100,12 +99,6 @@ Migrations are written in pure, standard **`.sql`** format (`-- Up Migration` an
 npm run migrate:up
 ```
 
-*Helpful migration commands:*
-```bash
-npm run migrate:up                           # Run all pending SQL migrations
-npm run migrate:down                         # Roll back the last migration batch
-npm run migrate:create -- my_migration_name  # Generate a new .sql migration file
-```
 
 ---
 
@@ -123,10 +116,10 @@ npm run dev
 #### Terminal 2 — Start Frontend (React Native / Expo):
 
 ```bash
-# Run in Browser / Chrome (Fastest for testing)
+# Run in Browser 
 npm run mobile:web
 ```
-- Opens automatically in your browser at: **`http://localhost:8081`**
+- Opens automatically in your browser at: **`http://localhost:80    81`**
 
 ```bash
 # Or run on Real Phone via Expo Go (iOS / Android)
@@ -216,15 +209,6 @@ erDiagram
         timestamptz created_at
     }
 ```
-
-### Table Relationships & Key Constraints:
-- **`loans.lender_id`** & **`loans.borrower_id`**: Foreign keys to `users.id` with constraint `CHECK (lender_id <> borrower_id)`.
-- **`loan_payments.loan_id`**: Foreign key to `loans.id` (`ON DELETE CASCADE`).
-- **Dynamic Status Transitions**:
-  - `total_paid == 0` ➔ `PENDING`
-  - `0 < total_paid < principal` ➔ `PARTIALLY_PAID`
-  - `total_paid >= principal` ➔ `REPAID`
-
 ---
 
 ## 📂 Project Directory Structure
