@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,14 @@ const AppNavigator: React.FC = () => {
   const [pendingPhone, setPendingPhone] = useState<string>('');
   const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setStep('phone');
+      setPendingPhone('');
+      setSelectedLoanId(null);
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

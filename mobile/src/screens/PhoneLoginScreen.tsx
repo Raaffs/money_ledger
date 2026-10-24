@@ -33,8 +33,15 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpSent })
       return;
     }
 
-    // Default to +91 country code if not prefixed
-    const fullPhone = phoneNumber.startsWith('+') ? phoneNumber.trim() : `+91${cleanDigits}`;
+    // Append +91 country code if not prefixed
+    let fullPhone = phoneNumber.trim();
+    if (!fullPhone.startsWith('+')) {
+      if (cleanDigits.length === 12 && cleanDigits.startsWith('91')) {
+        fullPhone = `+${cleanDigits}`;
+      } else {
+        fullPhone = `+91${cleanDigits.slice(-10)}`;
+      }
+    }
 
     try {
       setLoading(true);

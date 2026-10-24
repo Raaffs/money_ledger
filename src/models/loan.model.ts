@@ -166,35 +166,36 @@ export class LoanModel {
     return res.rows[0] || null;
   }
 
-  async getSummary(lenderId: string): Promise<LoanSummaryMetrics> {
+  async getSummary(userId: string): Promise<LoanSummaryMetrics> {
     const res = await query<LoanSummaryMetrics>(
-      `WITH loan_summaries AS (
-         SELECT 
-           l.id,
-           l.principal_amount,
-           l.due_date,
-           l.status,
-           COALESCE(SUM(p.amount), 0) AS total_paid,
-           GREATEST(0, l.principal_amount - COALESCE(SUM(p.amount), 0)) AS remaining_balance
-         FROM loans l
-         LEFT JOIN loan_payments p ON l.id = p.loan_id
-         WHERE l.lender_id = $1
-         GROUP BY l.id, l.principal_amount, l.due_date, l.status
-       )
-       SELECT 
-         COALESCE(SUM(principal_amount), 0)::TEXT AS total_lent,
-         COALESCE(SUM(total_paid), 0)::TEXT AS total_repaid,
-         COALESCE(
-           SUM(
-             CASE 
-               WHEN status <> 'REPAID' AND due_date < CURRENT_DATE 
-               THEN remaining_balance 
-               ELSE 0 
-             END
-           ), 0
-         )::TEXT AS overdue_amount
-       FROM loan_summaries;`,
-      [lenderId]
+      `SELECT 
+         (
+           SELECT COALESCE(SUM(principal_amount), 0)::TEXT 
+           FROM loans 
+           WHERE lender_id = $1
+         ) AS total_lent,
+         (
+           SELECT COALESCE(SUM(p.amount), 0)::TEXT
+           FROM loan_payments p
+           JOIN loans l ON p.loan_id = l.id
+           WHERE l.borrower_id = $1
+         ) AS total_repaid,
+         (
+           WITH overdue_borrowed AS (
+             SELECT 
+               l.id,
+               GREATEST(0, l.principal_amount - COALESCE(SUM(p.amount), 0)) AS remaining_balance
+             FROM loans l
+             LEFT JOIN loan_payments p ON l.id = p.loan_id
+             WHERE l.borrower_id = $1 
+               AND l.status <> 'REPAID' 
+               AND l.due_date < CURRENT_DATE
+             GROUP BY l.id, l.principal_amount
+           )
+           SELECT COALESCE(SUM(remaining_balance), 0)::TEXT
+           FROM overdue_borrowed
+         ) AS overdue_amount;`,
+      [userId]
     );
     return res.rows[0];
   }

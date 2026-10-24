@@ -27,7 +27,6 @@ export class AuthService {
     const existingUser = await this.userRepo.findByPhone(cleanPhone);
     const isExistingUser = existingUser !== null;
 
-    // Log mock OTP visibly in server console
     console.log('\n======================================================');
     console.log(`🔑 [MOCK OTP SERVICE]`);
     console.log(`📱 Phone:       ${cleanPhone}`);
@@ -52,7 +51,7 @@ export class AuthService {
     const isMockOtp = cleanOtp === '123456';
     const activeOtp = await this.otpRepo.findActiveOtp(cleanPhone, cleanOtp);
 
-    if (!activeOtp && !isMockOtp) {
+    if (!activeOtp) {
       const error: any = new Error('Invalid or expired OTP');
       error.status = 400;
       throw error;
@@ -70,7 +69,6 @@ export class AuthService {
         username?.trim() || `user_${sanitizedPhoneDigits}_${defaultSuffix}`;
       const finalDisplayName = displayName?.trim() || finalUsername;
 
-      // Ensure username uniqueness
       const existingWithUsername = await this.userRepo.findByUsername(finalUsername);
       if (existingWithUsername) {
         const error: any = new Error(`Username '${finalUsername}' is already taken. Please choose another username.`);
@@ -85,7 +83,6 @@ export class AuthService {
       });
     }
 
-    // Sign JWT Token
     const token = jwt.sign(
       {
         userId: user.id,

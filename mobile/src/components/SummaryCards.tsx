@@ -33,12 +33,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
           <View style={[styles.iconWrapper, { backgroundColor: colors.successLight }]}>
             <Ionicons name="checkmark-done-circle-outline" size={18} color={colors.success} />
           </View>
-          <Text style={styles.label}>Repaid</Text>
+          <Text style={styles.label}>Total Repaid</Text>
         </View>
         <Text style={[styles.amount, { color: colors.success }]}>
           {formatCurrency(summary.total_repaid)}
         </Text>
-        <Text style={styles.subtext}>Recovered funds</Text>
+        <Text style={styles.subtext}>Repaid to others</Text>
       </View>
 
       {/* Overdue */}
@@ -76,7 +76,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
           {formatCurrency(summary.overdue_amount)}
         </Text>
         <Text style={styles.subtext}>
-          {summary.overdue_amount > 0 ? 'Requires attention' : 'All on track'}
+          {summary.overdue_amount > 0 ? 'You owe others' : 'Nothing overdue'}
         </Text>
       </View>
     </View>

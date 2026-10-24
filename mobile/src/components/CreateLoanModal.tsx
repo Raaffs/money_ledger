@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { loansApi } from '../api/loans';
@@ -33,6 +34,7 @@ export const CreateLoanModal: React.FC<CreateLoanModalProps> = ({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const getFutureDate = (days: number): string => {
     const d = new Date();
@@ -62,8 +64,16 @@ export const CreateLoanModal: React.FC<CreateLoanModalProps> = ({
     setLoading(true);
 
     try {
+      let targetBorrower = borrowerIdentifier.trim();
+      const cleanDigits = targetBorrower.replace(/\D/g, '');
+
+      // If user entered a 10-digit number without country code, append +91
+      if (/^\d{10}$/.test(targetBorrower) || (cleanDigits.length === 10 && !/[a-zA-Z]/.test(targetBorrower))) {
+        targetBorrower = `+91${cleanDigits}`;
+      }
+
       const created = await loansApi.createLoan({
-        borrowerIdentifier: borrowerIdentifier.trim(),
+        borrowerIdentifier: targetBorrower,
         amount: numAmount,
         dueDate: dueDate.trim(),
         notes: notes.trim() || undefined,
@@ -143,9 +153,29 @@ export const CreateLoanModal: React.FC<CreateLoanModalProps> = ({
             </View>
 
             {/* Due Date */}
-            <Text style={styles.label}>Due Date (YYYY-MM-DD)</Text>
-            <View style={styles.inputBox}>
-              <Ionicons name="calendar-outline" size={18} color={colors.textMuted} />
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Due Date (YYYY-MM-DD)</Text>
+              <TouchableOpacity
+                onPress={() => setShowCalendar(!showCalendar)}
+                style={styles.calendarToggleBtn}
+              >
+                <Ionicons
+                  name={showCalendar ? 'calendar' : 'calendar-outline'}
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text style={styles.calendarToggleText}>
+                  {showCalendar ? 'Hide Calendar' : 'Open Calendar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setShowCalendar(!showCalendar)}
+              style={styles.inputBox}
+            >
+              <Ionicons name="calendar-outline" size={18} color={colors.primary} />
               <TextInput
                 style={styles.input}
                 placeholder="2026-11-15"
@@ -156,25 +186,80 @@ export const CreateLoanModal: React.FC<CreateLoanModalProps> = ({
                   if (error) setError(null);
                 }}
               />
-            </View>
+              <Ionicons
+                name={showCalendar ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={colors.textMuted}
+              />
+            </TouchableOpacity>
+
+            {/* Embedded Calendar Component */}
+            {showCalendar && (
+              <View style={styles.calendarCard}>
+                <Calendar
+                  theme={{
+                    backgroundColor: colors.surface,
+                    calendarBackground: colors.surface,
+                    textSectionTitleColor: colors.textSecondary,
+                    selectedDayBackgroundColor: colors.primary,
+                    selectedDayTextColor: '#ffffff',
+                    todayTextColor: colors.primary,
+                    dayTextColor: colors.text,
+                    textDisabledColor: colors.textMuted,
+                    arrowColor: colors.primary,
+                    monthTextColor: colors.text,
+                    indicatorColor: colors.primary,
+                    textMonthFontWeight: 'bold',
+                    textDayFontSize: 13,
+                    textMonthFontSize: 14,
+                    textDayHeaderFontSize: 11,
+                  }}
+                  minDate={new Date().toISOString().split('T')[0]}
+                  onDayPress={(day: any) => {
+                    setDueDate(day.dateString);
+                    setShowCalendar(false);
+                    if (error) setError(null);
+                  }}
+                  markedDates={
+                    dueDate
+                      ? {
+                          [dueDate]: {
+                            selected: true,
+                            selectedColor: colors.primary,
+                          },
+                        }
+                      : {}
+                  }
+                />
+              </View>
+            )}
 
             {/* Quick Date Chips */}
             <View style={styles.chipsRow}>
               <TouchableOpacity
                 style={styles.chip}
-                onPress={() => setDueDate(getFutureDate(7))}
+                onPress={() => {
+                  setDueDate(getFutureDate(7));
+                  setShowCalendar(false);
+                }}
               >
                 <Text style={styles.chipText}>In 7 Days</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.chip}
-                onPress={() => setDueDate(getFutureDate(15))}
+                onPress={() => {
+                  setDueDate(getFutureDate(15));
+                  setShowCalendar(false);
+                }}
               >
                 <Text style={styles.chipText}>In 15 Days</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.chip}
-                onPress={() => setDueDate(getFutureDate(30))}
+                onPress={() => {
+                  setDueDate(getFutureDate(30));
+                  setShowCalendar(false);
+                }}
               >
                 <Text style={styles.chipText}>In 30 Days</Text>
               </TouchableOpacity>
@@ -279,6 +364,35 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 13,
     flex: 1,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  calendarToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  calendarToggleText: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  calendarCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    overflow: 'hidden',
+    marginBottom: 16,
+    padding: 4,
   },
   label: {
     fontSize: 11,

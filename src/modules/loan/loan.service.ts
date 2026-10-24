@@ -32,6 +32,12 @@ export class LoanService {
     if (!borrower) {
       borrower = await this.userRepo.findByPhone(cleanIdentifier);
     }
+    if (!borrower) {
+      const cleanDigits = cleanIdentifier.replace(/\D/g, '');
+      if (cleanDigits.length === 10) {
+        borrower = await this.userRepo.findByPhone(`+91${cleanDigits}`);
+      }
+    }
 
     if (!borrower) {
       const error: any = new Error(`Borrower with username or phone '${cleanIdentifier}' not found`);
