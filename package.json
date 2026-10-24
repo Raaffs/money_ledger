@@ -14,7 +14,10 @@
     "migrate:create": "node-pg-migrate create -j sql",
     "db:migrate": "node-pg-migrate up",
     "mobile": "npm --prefix mobile run start",
-    "mobile:web": "npm --prefix mobile run web"
+    "mobile:tunnel": "npm --prefix mobile run start -- --tunnel",
+    "mobile:web": "npm --prefix mobile run web",
+    "mobile:android": "npm --prefix mobile run android",
+    "android": "npm --prefix mobile run android"
   },
   "keywords": [],
   "author": "",

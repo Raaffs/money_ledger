@@ -1,17 +1,7 @@
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const getBaseUrl = (): string => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:4000/api';
-  }
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:4000/api';
-  }
-  return 'http://localhost:4000/api';
-};
-
-export const API_BASE_URL = getBaseUrl();
+export const NGROK_URL = 'https://untouched-conform-botany.ngrok-free.dev';
+export const API_BASE_URL = `${NGROK_URL}/api`;
 
 export const TOKEN_STORAGE_KEY = '@miniledger_auth_token';
 export const USER_STORAGE_KEY = '@miniledger_auth_user';
@@ -35,6 +25,7 @@ export const apiClient = async <T = any>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
     ...(options.headers as Record<string, string>),
   };
 
